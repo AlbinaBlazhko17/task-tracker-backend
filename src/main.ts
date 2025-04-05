@@ -17,7 +17,9 @@ async function bootstrap() {
     exposedHeaders: ['set-cookie']
   })
 
-  app.useGlobalFilters(new AppExceptionsFilter(app.get(HttpAdapterHost)))
+  app.useGlobalFilters(
+    new AppExceptionsFilter(app.get(HttpAdapterHost), new EmojiLogger())
+  )
 
   await app.listen(process.env.PORT ?? 3000)
 }
