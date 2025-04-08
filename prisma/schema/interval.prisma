@@ -1,15 +1,15 @@
 model Interval {
   id String @id @default(cuid())
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
   work  Int? @default(50)
   break Int? @default(10)
   count Int? @default(7)
 
   userId String @map("user_id")
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("interval")
 }

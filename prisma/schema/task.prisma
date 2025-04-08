@@ -7,15 +7,15 @@ enum Priority {
 model Task {
   id String @id @default(cuid())
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
   name        String
   priority    Priority?
   isCompleted Boolean?  @default(false) @map("is_completed")
 
   userId String @map("user_id")
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("task")
 }
