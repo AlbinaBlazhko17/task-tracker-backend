@@ -1,14 +1,19 @@
-import { HttpAdapterHost, NestFactory } from '@nestjs/core'
-import { AppModule } from '@app/app.module'
 import * as cookieParser from 'cookie-parser'
-import { AppExceptionsFilter } from '@app/app-exceptions.filter'
-import { EmojiLogger } from '@app/logger.service'
+
+import { NestFactory } from '@nestjs/core'
+
+import { AppModule } from '@app/app.module'
+
+import { EmojiLogger } from '@/core/logging/logger.service'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    logger: new EmojiLogger()
+    bufferLogs: true
   })
 
+  const logger = app.get(EmojiLogger)
+
+  app.useLogger(logger)
   app.setGlobalPrefix('/api')
   app.use(cookieParser())
   app.enableCors({
@@ -16,10 +21,6 @@ async function bootstrap() {
     credentials: true,
     exposedHeaders: ['set-cookie']
   })
-
-  app.useGlobalFilters(
-    new AppExceptionsFilter(app.get(HttpAdapterHost), new EmojiLogger())
-  )
 
   await app.listen(process.env.PORT ?? 3000)
 }

@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
-import appConfig from './config/app.config'
+
+import { CoreModule } from '@core/core.module'
 import { AuthModule } from '@modules/auth/auth.module'
 import { UserModule } from '@modules/user/user.module'
-import { CoreModule } from '@core/core.module'
+
+import appConfig from '@/config/app.config'
 
 @Module({
   imports: [
