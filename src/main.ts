@@ -1,5 +1,6 @@
 import * as cookieParser from 'cookie-parser'
 
+import { ValidationPipe } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
 
 import { AppModule } from '@app/app.module'
@@ -14,6 +15,16 @@ async function bootstrap() {
   const logger = app.get(EmojiLogger)
 
   app.useLogger(logger)
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transformOptions: {
+        enableImplicitConversion: true
+      }
+    })
+  )
   app.setGlobalPrefix('/api')
   app.use(cookieParser())
   app.enableCors({
