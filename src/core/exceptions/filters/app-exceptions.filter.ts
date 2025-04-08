@@ -31,6 +31,18 @@ export class AppExceptionsFilter implements ExceptionFilter {
 
     const path = this.getRequestUrlSafe(request)
 
+    if (status === 400 && exception.getResponse()['message']) {
+      const validationErrors = exception.getResponse()['message']
+      return response.status(status).json({
+        statusCode: status,
+        message: 'Validation failed',
+        errors: Array.isArray(validationErrors)
+          ? validationErrors
+          : [validationErrors],
+        timestamp: new Date().toISOString()
+      })
+    }
+
     const errorResponse = {
       statusCode: status,
       message,
