@@ -1,0 +1,32 @@
+echo "Running pre-push checks..."
+
+# Run linting
+echo "Running ESLint..."
+npm run lint || {
+    echo "ESLint failed, please fix the issues before pushing"
+    exit 1
+}
+
+# Run tests
+echo "Running tests..."
+npm run test || {
+    echo "Tests failed, please fix them before pushing"
+    exit 1
+}
+
+# Build the project
+echo "Building project..."
+npm run build || {
+    echo "Build failed, please fix the issues before pushing"
+    exit 1
+}
+
+# Check if Prisma schema is in sync with database
+echo "Checking Prisma schema..."
+npm run db:generate
+npx prisma migrate status || {
+    echo "Prisma schema is not in sync with the database, please run 'db:push' or create a migration"
+    exit 1
+}
+
+echo "All pre-push checks passed! Happy pushing!"
