@@ -5,5 +5,24 @@
   "semi": false,
   "printWidth": 80,
   "arrowParens": "avoid",
-  "jsxSingleQuote": true
+  "jsxSingleQuote": true,
+  "importOrder": [
+    "<THIRD_PARTY_MODULES>",
+    "^@nestjs",
+    "^@(?!nestjs)[^/]+",
+    "^@app/(.*)$",
+    "^@common/(.*)$",
+    "^@config/(.*)$",
+    "^@modules/(.*)$",
+    "^@shared/(.*)$",
+    "^@core/(.*)$",
+    "^@interfaces/(.*)$",
+    "^@decorators/(.*)$",
+    "^../../(.*)",
+    "^../(.*)",
+    "^./(.*)"
+  ],
+  "importOrderSeparation": true,
+  "importOrderSortSpecifiers": true,
+  "plugins": ["@trivago/prettier-plugin-sort-imports"]
 }
