@@ -6,6 +6,7 @@ import { AuthModule } from '@modules/auth/auth.module'
 import { UserModule } from '@modules/user/user.module'
 
 import { TaskModule } from './modules/task/task.module'
+import { TimeBlockModule } from './modules/time-block/time-block.module'
 import appConfig from '@/config/app.config'
 
 @Module({
@@ -16,7 +17,8 @@ import appConfig from '@/config/app.config'
     CoreModule,
     UserModule,
     AuthModule,
-    TaskModule
+    TaskModule,
+    TimeBlockModule
   ]
 })
 export class AppModule {}

@@ -4,7 +4,7 @@ model TimeBlock {
   name     String
   color    String
   duration Int
-  order    Int    @default(1)
+  order    Int    @default(autoincrement())
 
   userId String @map("user_id")
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
