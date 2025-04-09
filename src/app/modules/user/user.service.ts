@@ -77,16 +77,18 @@ export class UserService {
 
     if (userDto.password) {
       data = {
-        ...userDto,
+        ...removePassword(userDto),
         password: await hash(userDto.password)
       }
     }
 
-    return this.prisma.user.update({
+    const updatedUser = await this.prisma.user.update({
       where: {
         id
       },
-      data
+      data: data
     })
+
+    return removePassword(updatedUser)
   }
 }
