@@ -19,7 +19,10 @@ export class UserController {
   @HttpCode(200)
   @Patch('profile')
   @Auth()
-  async updateProfile(@CurrentUser('id') id: string, @Body() userDto: UserDto) {
+  async updateProfile(
+    @CurrentUser('id') id: string,
+    @Body() userDto: Partial<UserDto>
+  ) {
     return this.userService.update(id, userDto)
   }
 }

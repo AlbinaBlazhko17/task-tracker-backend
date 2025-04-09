@@ -72,7 +72,7 @@ export class UserService {
     })
   }
 
-  async update(id: string, userDto: UserDto) {
+  async update(id: string, userDto: Partial<UserDto>) {
     let data = userDto
 
     if (userDto.password) {
