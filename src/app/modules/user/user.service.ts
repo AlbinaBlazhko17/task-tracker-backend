@@ -44,7 +44,7 @@ export class UserService {
     })
   }
 
-  async getMe(id: string) {
+  async getProfile(id: string) {
     const user = await this.getById(id)
 
     const totalTasks = user?.tasks.length || 0
