@@ -2,7 +2,7 @@ import { IsEmail, IsOptional, IsString, MinLength } from 'class-validator'
 
 export class UserDto {
   @IsEmail()
-  email?: string
+  email: string
 
   @IsString()
   @IsOptional()
