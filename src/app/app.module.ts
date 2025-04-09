@@ -5,6 +5,7 @@ import { CoreModule } from '@core/core.module'
 import { AuthModule } from '@modules/auth/auth.module'
 import { UserModule } from '@modules/user/user.module'
 
+import { PomodoroTimerModule } from './modules/pomodoro-timer/pomodoro-timer.module'
 import { TaskModule } from './modules/task/task.module'
 import { TimeBlockModule } from './modules/time-block/time-block.module'
 import appConfig from '@/config/app.config'
@@ -18,7 +19,8 @@ import appConfig from '@/config/app.config'
     UserModule,
     AuthModule,
     TaskModule,
-    TimeBlockModule
+    TimeBlockModule,
+    PomodoroTimerModule
   ]
 })
 export class AppModule {}

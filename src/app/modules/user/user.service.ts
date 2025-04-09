@@ -103,4 +103,19 @@ export class UserService {
 
     return removePassword(updatedUser)
   }
+
+  async getIntervals(id: string) {
+    return this.prisma.user.findUnique({
+      where: {
+        id
+      },
+      select: {
+        intervals: {
+          select: {
+            count: true
+          }
+        }
+      }
+    })
+  }
 }
