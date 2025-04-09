@@ -25,6 +25,7 @@ export class AuthController {
   ) {
     const { refreshToken, ...user } = await this.authService.sigIn(authDto)
 
+    this.authService.removeRefreshTokenFromResponse(res)
     this.authService.addRefreshTokenToResponse(res, refreshToken)
 
     return {
