@@ -5,7 +5,7 @@ model User {
   email    String  @unique
   password String
 
-  intervals        Interval[]
+  intervals        Interval?
   pomodoroSessions PomodoroSession[]
   tasks            Task[]
   timeBlocks       TimeBlock[]

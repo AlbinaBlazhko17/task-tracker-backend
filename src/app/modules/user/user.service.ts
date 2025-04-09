@@ -24,7 +24,14 @@ export class UserService {
         id
       },
       include: {
-        tasks: true
+        tasks: true,
+        intervals: {
+          select: {
+            work: true,
+            break: true,
+            count: true
+          }
+        }
       }
     })
   }
@@ -68,7 +75,12 @@ export class UserService {
     }
 
     return this.prisma.user.create({
-      data: user
+      data: {
+        ...user,
+        intervals: {
+          create: {}
+        }
+      }
     })
   }
 
