@@ -5,6 +5,7 @@ import { CoreModule } from '@core/core.module'
 import { AuthModule } from '@modules/auth/auth.module'
 import { UserModule } from '@modules/user/user.module'
 
+import { TaskModule } from './modules/task/task.module'
 import appConfig from '@/config/app.config'
 
 @Module({
@@ -14,7 +15,8 @@ import appConfig from '@/config/app.config'
     }),
     CoreModule,
     UserModule,
-    AuthModule
+    AuthModule,
+    TaskModule
   ]
 })
 export class AppModule {}

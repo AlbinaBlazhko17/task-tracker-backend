@@ -9,10 +9,11 @@ import {
 } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 
+import { removePassword } from '@utils/helpers/remove-password.helper'
+
 import { UserService } from '../user/user.service'
 
 import { AuthDto } from './dto/auth.dto'
-import { removePassword } from './utils/remove-password.helper'
 
 @Injectable()
 export class AuthService {

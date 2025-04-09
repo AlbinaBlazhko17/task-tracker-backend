@@ -7,7 +7,6 @@ import { PrismaModule } from './prisma/prisma.module'
 @Global()
 @Module({
   imports: [PrismaModule, LoggingModule, ExceptionsModule],
-  providers: [],
   exports: [PrismaModule, LoggingModule, ExceptionsModule]
 })
 export class CoreModule {}

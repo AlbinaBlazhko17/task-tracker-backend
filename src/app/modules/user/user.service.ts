@@ -1,14 +1,22 @@
 import { hash } from 'argon2'
+import { startOfDay, subDays } from 'date-fns'
 
 import { Injectable } from '@nestjs/common'
 
 import { PrismaService } from '@core/prisma/prisma.service'
 
-import type { AuthDto } from '../auth/dto/auth.dto'
+import { AuthDto } from '../auth/dto/auth.dto'
+import { TaskService } from '../task/task.service'
+
+import { UserDto } from './dto/user.dto'
+import { removePassword } from '@/utils/helpers/remove-password.helper'
 
 @Injectable()
 export class UserService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private taskService: TaskService
+  ) {}
 
   async getById(id: string) {
     return this.prisma.user.findUnique({
@@ -29,6 +37,29 @@ export class UserService {
     })
   }
 
+  async getMe(id: string) {
+    const user = await this.getById(id)
+
+    const totalTasks = user?.tasks.length || 0
+    const completedTasks = await this.taskService.getCompletedTasks(id)
+
+    const todayStart = startOfDay(new Date())
+    const weekStart = startOfDay(subDays(new Date(), 7))
+
+    const todayTasks = await this.taskService.getTasksByDate(id, todayStart)
+    const weekTasks = await this.taskService.getTasksByDate(id, weekStart)
+
+    return {
+      user: removePassword(user),
+      stats: [
+        { label: 'Total', value: totalTasks },
+        { label: 'Completed tasks', value: completedTasks },
+        { label: 'Today tasks', value: todayTasks },
+        { label: 'Week tasks', value: weekTasks }
+      ]
+    }
+  }
+
   async create(authDto: AuthDto) {
     const user = {
       email: authDto.email,
@@ -38,6 +69,24 @@ export class UserService {
 
     return this.prisma.user.create({
       data: user
+    })
+  }
+
+  async update(id: string, userDto: UserDto) {
+    let data = userDto
+
+    if (userDto.password) {
+      data = {
+        ...userDto,
+        password: await hash(userDto.password)
+      }
+    }
+
+    return this.prisma.user.update({
+      where: {
+        id
+      },
+      data
     })
   }
 }
