@@ -9,9 +9,10 @@ describe('TimeBlockController', () => {
   let controller: TimeBlockController
   let service: TimeBlockService
 
+  const userId = 'user123'
   const mockTimeBlocks = [
-    { id: '1', name: 'Block 1', duration: 60, userId: 'user123' },
-    { id: '2', name: 'Block 2', duration: 30, userId: 'user123' }
+    { id: '1', name: 'Block 1', duration: 60, userId, order: 0, color: 'red' },
+    { id: '2', name: 'Block 2', duration: 30, userId, order: 1, color: 'blue' }
   ]
 
   const mockTimeBlockService = {
@@ -23,6 +24,8 @@ describe('TimeBlockController', () => {
   }
 
   beforeEach(async () => {
+    jest.clearAllMocks()
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [TimeBlockController],
       providers: [
@@ -43,8 +46,6 @@ describe('TimeBlockController', () => {
 
   describe('findAll', () => {
     it('should return all time blocks for a user', async () => {
-      const userId = 'user123'
-
       const result = await controller.findAll(userId)
 
       expect(service.findAll).toHaveBeenCalledWith(userId)
@@ -54,7 +55,6 @@ describe('TimeBlockController', () => {
 
   describe('create', () => {
     it('should create a new time block', async () => {
-      const userId = 'user123'
       const timeBlockDto: TimeBlockDto = {
         name: 'New Block',
         duration: 60,
@@ -68,7 +68,7 @@ describe('TimeBlockController', () => {
         createdAt: new Date(),
         updatedAt: new Date()
       }
-      jest.spyOn(service, 'create').mockResolvedValue(mockCreatedBlock)
+      mockTimeBlockService.create.mockResolvedValueOnce(mockCreatedBlock)
 
       const result = await controller.create(timeBlockDto, userId)
 
@@ -79,20 +79,14 @@ describe('TimeBlockController', () => {
 
   describe('update', () => {
     it('should update an existing time block', async () => {
-      const userId = 'user123'
       const id = '1'
       const timeBlockDto: Partial<TimeBlockDto> = { name: 'Updated Block' }
       const mockUpdatedBlock = {
         ...mockTimeBlocks[0],
         ...timeBlockDto,
-        userId,
-        color: 'red',
-        duration: 60,
-        order: 1,
-        createdAt: new Date(),
         updatedAt: new Date()
       }
-      jest.spyOn(service, 'update').mockResolvedValue(mockUpdatedBlock)
+      mockTimeBlockService.update.mockResolvedValueOnce(mockUpdatedBlock)
 
       const result = await controller.update(timeBlockDto, userId, id)
 
@@ -103,19 +97,9 @@ describe('TimeBlockController', () => {
 
   describe('delete', () => {
     it('should delete a time block', async () => {
-      const userId = 'user123'
       const id = '1'
-      const mockDeletedBlock = {
-        id,
-        userId,
-        name: 'Block 1',
-        order: 1,
-        color: 'red',
-        duration: 30,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      }
-      jest.spyOn(service, 'delete').mockResolvedValue(mockDeletedBlock)
+      const mockDeletedBlock = { ...mockTimeBlocks[0] }
+      mockTimeBlockService.delete.mockResolvedValueOnce(mockDeletedBlock)
 
       const result = await controller.delete(userId, id)
 
@@ -131,9 +115,9 @@ describe('TimeBlockController', () => {
         { id: '2', order: 0 },
         { id: '1', order: 1 }
       ]
-      jest
-        .spyOn(service, 'updateOrder')
-        .mockResolvedValue(mockTransactionResult as any)
+      mockTimeBlockService.updateOrder.mockResolvedValueOnce(
+        mockTransactionResult
+      )
 
       const result = await controller.updateOrder(updateOrderDto)
 

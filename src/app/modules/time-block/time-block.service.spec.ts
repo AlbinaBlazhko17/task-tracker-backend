@@ -8,19 +8,34 @@ describe('TimeBlockService', () => {
   let service: TimeBlockService
   let prisma: PrismaService
 
+  const mockPrismaService = {
+    timeBlock: {
+      findMany: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      updateMany: jest.fn()
+    },
+    $transaction: jest.fn()
+  }
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TimeBlockService,
         {
           provide: PrismaService,
-          useValue: new PrismaService()
+          useValue: mockPrismaService
         }
       ]
     }).compile()
 
     service = module.get<TimeBlockService>(TimeBlockService)
     prisma = module.get<PrismaService>(PrismaService)
+  })
+
+  afterEach(() => {
+    jest.clearAllMocks()
   })
 
   it('should be defined', () => {
@@ -41,7 +56,7 @@ describe('TimeBlockService', () => {
           updatedAt: new Date()
         }
       ]
-      jest.spyOn(prisma.timeBlock, 'findMany').mockResolvedValue(mockTimeBlocks)
+      mockPrismaService.timeBlock.findMany.mockResolvedValue(mockTimeBlocks)
 
       const result = await service.findAll('user1')
       expect(result).toEqual(mockTimeBlocks)
@@ -67,7 +82,7 @@ describe('TimeBlockService', () => {
         createdAt: new Date(),
         updatedAt: new Date()
       }
-      jest.spyOn(prisma.timeBlock, 'create').mockResolvedValue(mockTimeBlock)
+      mockPrismaService.timeBlock.create.mockResolvedValue(mockTimeBlock)
 
       const result = await service.create(timeBlockDto, 'user1')
       expect(result).toEqual(mockTimeBlock)
@@ -93,7 +108,7 @@ describe('TimeBlockService', () => {
         createdAt: new Date(),
         updatedAt: new Date()
       }
-      jest.spyOn(prisma.timeBlock, 'update').mockResolvedValue(mockUpdatedBlock)
+      mockPrismaService.timeBlock.update.mockResolvedValue(mockUpdatedBlock)
 
       const result = await service.update('1', timeBlockDto, 'user1')
       expect(result).toEqual(mockUpdatedBlock)
@@ -116,7 +131,7 @@ describe('TimeBlockService', () => {
         createdAt: new Date(),
         updatedAt: new Date()
       }
-      jest.spyOn(prisma.timeBlock, 'delete').mockResolvedValue(mockDeletedBlock)
+      mockPrismaService.timeBlock.delete.mockResolvedValue(mockDeletedBlock)
 
       const result = await service.delete('1', 'user1')
       expect(result).toEqual(mockDeletedBlock)
@@ -134,12 +149,18 @@ describe('TimeBlockService', () => {
         { id: '2', order: 1 },
         { id: '3', order: 2 }
       ]
-      jest
-        .spyOn(prisma, '$transaction')
-        .mockResolvedValue(mockTransactionResult)
+      mockPrismaService.$transaction.mockImplementation(
+        (callback: (prisma: typeof mockPrismaService) => any) => {
+          if (typeof callback === 'function') {
+            return callback(mockPrismaService)
+          }
+          return mockTransactionResult
+        }
+      )
 
       const result = await service.updateOrder(ids)
       expect(result).toEqual(mockTransactionResult)
+      expect(prisma.$transaction).toHaveBeenCalled()
     })
   })
 })

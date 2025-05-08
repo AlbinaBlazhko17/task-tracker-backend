@@ -12,11 +12,43 @@ import { UserService } from '../user/user.service'
 
 import { AuthService } from './auth.service'
 import { AuthDto } from './dto/auth.dto'
+import { removePassword } from '@/utils/helpers/remove-password.helper'
 
 describe('AuthService', () => {
   let service: AuthService
   let jwtService: JwtService
   let userService: UserService
+
+  const mockUser = {
+    id: '1',
+    name: 'Test User',
+    email: 'test@test.com',
+    password: 'hashedPassword',
+    createdAt: new Date(),
+    updatedAt: new Date()
+  }
+
+  const mockUserWithDetails = {
+    ...mockUser,
+    intervals: {
+      work: 1,
+      break: 1,
+      count: 1
+    },
+    tasks: [
+      {
+        id: '1',
+        name: 'Test Task',
+        userId: '1',
+        priority: 'high' as const,
+        isCompleted: false,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ]
+  }
+
+  const mockAuthDto: AuthDto = { email: 'test@test.com', password: 'password' }
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -25,7 +57,7 @@ describe('AuthService', () => {
         {
           provide: JwtService,
           useValue: {
-            sign: jest.fn(),
+            sign: jest.fn().mockReturnValue('token'),
             verifyAsync: jest.fn()
           }
         },
@@ -50,67 +82,38 @@ describe('AuthService', () => {
   })
 
   describe('signUp', () => {
-    it('should throw BadRequestException if user already exists', async () => {
-      jest.spyOn(userService, 'getByEmail').mockResolvedValueOnce({
-        id: '1',
-        name: 'Test User',
-        email: 'test@test.com',
-        password: 'hashedPassword',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      })
+    it('should throw BadRequestException when user with email already exists', async () => {
+      jest.spyOn(userService, 'getByEmail').mockResolvedValueOnce(mockUser)
 
-      const authDto: AuthDto = { email: 'test@test.com', password: 'password' }
-
-      await expect(service.signUp(authDto)).rejects.toThrow(BadRequestException)
+      await expect(service.signUp(mockAuthDto)).rejects.toThrow(
+        BadRequestException
+      )
     })
 
-    it('should create a new user and return tokens', async () => {
+    it('should create a new user and return user info with tokens', async () => {
       jest.spyOn(userService, 'getByEmail').mockResolvedValueOnce(null)
-      jest.spyOn(userService, 'create').mockResolvedValueOnce({
-        id: '1',
-        name: 'Test User',
-        email: 'test@test.com',
-        password: 'hashedPassword',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      })
-      jest.spyOn(jwtService, 'sign').mockReturnValue('token')
+      jest.spyOn(userService, 'create').mockResolvedValueOnce(mockUser)
 
-      const authDto: AuthDto = { email: 'test@test.com', password: 'password' }
+      const result = await service.signUp(mockAuthDto)
 
-      const result = await service.signUp(authDto)
-
-      expect(result).toEqual({
-        id: '1',
-        name: 'Test User',
-        email: 'test@test.com',
-        accessToken: 'token',
-        refreshToken: 'token',
-        createdAt: expect.any(Date),
-        updatedAt: expect.any(Date)
-      })
+      expect(result).toEqual(
+        removePassword({
+          ...mockUser,
+          accessToken: 'token',
+          refreshToken: 'token'
+        })
+      )
     })
   })
 
   describe('signIn', () => {
-    it('should validate user and return tokens', async () => {
-      jest.spyOn(userService, 'getByEmail').mockResolvedValueOnce({
-        id: '1',
-        name: 'Test User',
-        email: 'test@test.com',
-        password: 'hashedPassword',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      })
-      jest.spyOn(jwtService, 'sign').mockReturnValue('token')
+    it('should validate credentials and return user info with tokens', async () => {
+      jest.spyOn(userService, 'getByEmail').mockResolvedValueOnce(mockUser)
       jest
         .spyOn(service as any, 'validateUser')
         .mockResolvedValueOnce({ id: '1', email: 'test@test.com' })
 
-      const authDto: AuthDto = { email: 'test@test.com', password: 'password' }
-
-      const result = await service.sigIn(authDto)
+      const result = await service.sigIn(mockAuthDto)
 
       expect(result).toEqual({
         id: '1',
@@ -122,7 +125,7 @@ describe('AuthService', () => {
   })
 
   describe('signOut', () => {
-    it('should throw UnauthorizedException if no refresh token is provided', async () => {
+    it('should throw UnauthorizedException when no refresh token is provided', async () => {
       const res = {} as Response
 
       await expect(service.signOut(res, undefined)).rejects.toThrow(
@@ -130,34 +133,13 @@ describe('AuthService', () => {
       )
     })
 
-    it('should remove refresh token and return success message', async () => {
+    it('should clear refresh token cookie and return success message', async () => {
       jest.spyOn(jwtService, 'verifyAsync').mockResolvedValueOnce({ id: '1' })
-      jest.spyOn(userService, 'getById').mockResolvedValueOnce({
-        id: '1',
-        name: 'Test User',
-        email: 'test@test.com',
-        password: 'hashedPassword',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        intervals: {
-          work: 1,
-          break: 1,
-          count: 1
-        },
-        tasks: [
-          {
-            id: '1',
-            name: 'Test Task',
-            userId: '1',
-            priority: 'high',
-            isCompleted: false,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          }
-        ]
-      })
-      const res = { clearCookie: jest.fn() } as unknown as Response
+      jest
+        .spyOn(userService, 'getById')
+        .mockResolvedValueOnce(mockUserWithDetails)
 
+      const res = { clearCookie: jest.fn() } as unknown as Response
       const result = await service.signOut(res, 'validRefreshToken')
 
       expect(res.clearCookie).toHaveBeenCalledWith(
@@ -169,7 +151,7 @@ describe('AuthService', () => {
   })
 
   describe('refreshTokens', () => {
-    it('should throw UnauthorizedException if refresh token is invalid', async () => {
+    it('should throw UnauthorizedException when refresh token is invalid', async () => {
       jest
         .spyOn(jwtService, 'verifyAsync')
         .mockRejectedValueOnce(new UnauthorizedException())
@@ -179,120 +161,52 @@ describe('AuthService', () => {
       )
     })
 
-    it('should return new tokens if refresh token is valid', async () => {
+    it('should return new tokens and user info when refresh token is valid', async () => {
       jest.spyOn(jwtService, 'verifyAsync').mockResolvedValueOnce({ id: '1' })
-      jest.spyOn(userService, 'getById').mockResolvedValueOnce({
-        id: '1',
-        name: 'Test User',
-        email: 'test@test.com',
-        password: 'hashedPassword',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        intervals: {
-          work: 1,
-          break: 1,
-          count: 1
-        },
-        tasks: [
-          {
-            id: '1',
-            name: 'Test Task',
-            userId: '1',
-            priority: 'high',
-            isCompleted: false,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          }
-        ]
-      })
+      jest
+        .spyOn(userService, 'getById')
+        .mockResolvedValueOnce(mockUserWithDetails)
       jest.spyOn(jwtService, 'sign').mockReturnValue('newToken')
 
       const result = await service.refreshTokens('validToken')
 
-      expect(result).toEqual({
-        id: '1',
-        name: 'Test User',
-        email: 'test@test.com',
-        accessToken: 'newToken',
-        refreshToken: 'newToken',
-        createdAt: expect.any(Date),
-        updatedAt: expect.any(Date),
-        intervals: {
-          work: 1,
-          break: 1,
-          count: 1
-        },
-        tasks: [
-          {
-            id: '1',
-            name: 'Test Task',
-            userId: '1',
-            priority: 'high',
-            isCompleted: false,
-            createdAt: expect.any(Date),
-            updatedAt: expect.any(Date)
-          }
-        ]
-      })
+      expect(result).toEqual(
+        removePassword({
+          ...mockUserWithDetails,
+          accessToken: 'newToken',
+          refreshToken: 'newToken'
+        })
+      )
     })
   })
 
   describe('validateUser', () => {
-    it('should throw NotFoundException if user does not exist', async () => {
+    it('should throw NotFoundException when user does not exist', async () => {
       jest.spyOn(userService, 'getByEmail').mockResolvedValueOnce(null)
 
-      const authDto: AuthDto = { email: 'test@test.com', password: 'password' }
-
-      await expect(service['validateUser'](authDto)).rejects.toThrow(
+      await expect(service['validateUser'](mockAuthDto)).rejects.toThrow(
         NotFoundException
       )
     })
 
-    it('should throw UnauthorizedException if password is invalid', async () => {
-      jest.spyOn(userService, 'getByEmail').mockResolvedValueOnce({
-        id: '1',
-        name: 'Test User',
-        email: 'test@test.com',
-        password: 'hashedPassword',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      })
+    it('should throw UnauthorizedException when password is incorrect', async () => {
+      jest.spyOn(userService, 'getByEmail').mockResolvedValueOnce(mockUser)
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       jest.spyOn(require('argon2'), 'verify').mockResolvedValueOnce(false)
 
-      const authDto: AuthDto = {
-        email: 'test@test.com',
-        password: 'wrongPassword'
-      }
-
-      await expect(service['validateUser'](authDto)).rejects.toThrow(
+      await expect(service['validateUser'](mockAuthDto)).rejects.toThrow(
         UnauthorizedException
       )
     })
 
-    it('should return user without password if validation succeeds', async () => {
-      jest.spyOn(userService, 'getByEmail').mockResolvedValueOnce({
-        id: '1',
-        name: 'Test User',
-        email: 'test@test.com',
-        password: 'hashedPassword',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      })
+    it('should return user without password when credentials are valid', async () => {
+      jest.spyOn(userService, 'getByEmail').mockResolvedValueOnce(mockUser)
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       jest.spyOn(require('argon2'), 'verify').mockResolvedValueOnce(true)
 
-      const authDto: AuthDto = { email: 'test@test.com', password: 'password' }
+      const result = await service['validateUser'](mockAuthDto)
 
-      const result = await service['validateUser'](authDto)
-
-      expect(result).toEqual({
-        id: '1',
-        name: 'Test User',
-        email: 'test@test.com',
-        createdAt: expect.any(Date),
-        updatedAt: expect.any(Date)
-      })
+      expect(result).toEqual(removePassword(mockUser))
     })
   })
 })

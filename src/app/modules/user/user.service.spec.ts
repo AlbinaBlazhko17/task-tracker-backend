@@ -16,6 +16,14 @@ describe('UserService', () => {
   let prisma: DeepMockProxy<PrismaClient>
   let taskService: DeepMockProxy<TaskService>
 
+  // Common mock data
+  const mockUserId = '1'
+  const mockEmail = 'test@example.com'
+  const mockUserBase = {
+    id: mockUserId,
+    email: mockEmail
+  }
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [UserService, TaskService, PrismaService]
@@ -36,19 +44,18 @@ describe('UserService', () => {
   })
 
   describe('getById', () => {
-    it('should return a user by ID', async function (this: void) {
+    it('should return user with tasks and intervals when found', async () => {
       const mockUser = {
-        id: '1',
-        email: 'test@example.com',
+        ...mockUserBase,
         tasks: [],
         intervals: []
       }
       prisma.user.findUnique.mockResolvedValue(mockUser as any)
 
-      const result = await service.getById('1')
+      const result = await service.getById(mockUserId)
 
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
-        where: { id: '1' },
+        where: { id: mockUserId },
         include: {
           tasks: true,
           intervals: { select: { work: true, break: true, count: true } }
@@ -59,28 +66,26 @@ describe('UserService', () => {
   })
 
   describe('getByEmail', () => {
-    it('should return a user by email', async () => {
-      const mockUser = { id: '1', email: 'test@example.com' }
-      prisma.user.findUnique.mockResolvedValue(mockUser as any)
+    it('should return user when email exists', async () => {
+      prisma.user.findUnique.mockResolvedValue(mockUserBase as any)
 
-      const result = await service.getByEmail('test@example.com')
+      const result = await service.getByEmail(mockEmail)
 
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
-        where: { email: 'test@example.com' }
+        where: { email: mockEmail }
       })
-      expect(result).toEqual(mockUser)
+      expect(result).toEqual(mockUserBase)
     })
   })
 
   describe('create', () => {
-    it('should create a new user', async () => {
+    it('should create and return a new user', async () => {
       const authDto: AuthDto = {
-        email: 'test@example.com',
+        email: mockEmail,
         password: 'password123'
       }
       const mockUser = {
-        id: '1',
-        email: 'test@example.com',
+        ...mockUserBase,
         name: '',
         password: 'hashedPassword'
       }
@@ -101,19 +106,18 @@ describe('UserService', () => {
   })
 
   describe('update', () => {
-    it('should update a user', async () => {
+    it('should update and return user with new data', async () => {
       const userDto: Partial<UserDto> = { name: 'Updated Name' }
       const mockUpdatedUser = {
-        id: '1',
-        email: 'test@example.com',
+        ...mockUserBase,
         name: 'Updated Name'
       }
       prisma.user.update.mockResolvedValue(mockUpdatedUser as any)
 
-      const result = await service.update('1', userDto)
+      const result = await service.update(mockUserId, userDto)
 
       expect(prisma.user.update).toHaveBeenCalledWith({
-        where: { id: '1' },
+        where: { id: mockUserId },
         data: userDto
       })
       expect(result).toEqual(mockUpdatedUser)
@@ -121,27 +125,26 @@ describe('UserService', () => {
   })
 
   describe('getProfile', () => {
-    it('should return user profile with stats', async () => {
-      const mockUser = { id: '1', email: 'test@example.com', tasks: [] }
+    it('should return user profile with statistics', async () => {
+      const mockUser = { ...mockUserBase, tasks: [] }
+      const mockTask = {
+        id: '1',
+        name: 'Sample Task',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        isCompleted: null,
+        userId: mockUserId,
+        priority: null
+      }
 
       prisma.user.findUnique.mockResolvedValue(mockUser as any)
       taskService.getCompletedTasks.mockResolvedValue(0)
-      taskService.getTasksByDate.mockResolvedValue([
-        {
-          id: '1',
-          name: 'Sample Task',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          isCompleted: null,
-          userId: '1',
-          priority: null
-        }
-      ])
+      taskService.getTasksByDate.mockResolvedValue([mockTask])
 
-      const result = await service.getProfile('1')
+      const result = await service.getProfile(mockUserId)
 
       expect(prisma.user.findUnique).toHaveBeenCalled()
-      expect(taskService.getCompletedTasks).toHaveBeenCalledWith('1')
+      expect(taskService.getCompletedTasks).toHaveBeenCalledWith(mockUserId)
       expect(result).toEqual({
         user: expect.any(Object),
         stats: expect.any(Array)
@@ -150,14 +153,14 @@ describe('UserService', () => {
   })
 
   describe('getIntervals', () => {
-    it('should return user intervals', async () => {
+    it('should return user intervals data', async () => {
       const mockIntervals = { intervals: { count: 5 } }
       prisma.user.findUnique.mockResolvedValue(mockIntervals as any)
 
-      const result = await service.getIntervals('1')
+      const result = await service.getIntervals(mockUserId)
 
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
-        where: { id: '1' },
+        where: { id: mockUserId },
         select: { intervals: { select: { count: true } } }
       })
       expect(result).toEqual(mockIntervals)
