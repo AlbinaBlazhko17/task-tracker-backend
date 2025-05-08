@@ -1,3 +1,4 @@
 {
-  "typescript.preferences.preferTypeOnlyAutoImports": false
+  "typescript.preferences.preferTypeOnlyAutoImports": false,
+  "jest.jestCommandLine": "npm test --"
 }
