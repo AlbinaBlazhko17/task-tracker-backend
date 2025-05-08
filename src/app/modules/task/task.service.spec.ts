@@ -75,6 +75,8 @@ describe('TaskService', () => {
         }
       ]
 
+      jest.spyOn(prisma.task, 'findMany').mockResolvedValue(mockTasks)
+
       const result = await service.getTasksByDate(userId, date)
 
       expect(prisma.task.findMany).toHaveBeenCalledWith({
