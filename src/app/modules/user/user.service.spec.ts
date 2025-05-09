@@ -16,7 +16,6 @@ describe('UserService', () => {
   let prisma: DeepMockProxy<PrismaClient>
   let taskService: DeepMockProxy<TaskService>
 
-  // Common mock data
   const mockUserId = '1'
   const mockEmail = 'test@example.com'
   const mockUserBase = {

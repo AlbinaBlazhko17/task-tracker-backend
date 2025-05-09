@@ -118,7 +118,7 @@ describe('PomodoroTimerService', () => {
 
     it('should handle user without intervals', async () => {
       const userId = 'user-id'
-      const mockUser = { id: userId } // No intervals property
+      const mockUser = { id: userId }
       const mockCreatedSession = {
         id: 'new-session',
         userId,
